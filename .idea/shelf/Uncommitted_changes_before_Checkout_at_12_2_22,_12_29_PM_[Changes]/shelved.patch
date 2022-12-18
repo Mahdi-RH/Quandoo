@@ -1,0 +1,200 @@
+Index: build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// Top-level build file where you can add configuration options common to all sub-projects/modules.\n\nbuildscript { \n    ext.kotlin_version = '1.2.71'\n\n    \n    repositories {\n        google()\n        jcenter()\n        maven { url \"https://plugins.gradle.org/m2/\" }\n    }\n    dependencies {\n        classpath 'com.android.tools.build:gradle:3.2.1'\n        classpath \"com.android.tools.build:gradle:3.1.4\"\n        \n\n        // NOTE: Do not place your application dependencies here; they belong\n        // in the individual module build.gradle files\n    classpath \"org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version\" }\n}\n\nallprojects {\n    repositories {\n        google()\n        jcenter()\n    }\n}\n\ntask clean(type: Delete) {\n    delete rootProject.buildDir\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build.gradle b/build.gradle
+--- a/build.gradle	(revision 6ef2afc5dcaf38f2e14f551769ffc49539ba5ce3)
++++ b/build.gradle	(date 1669394526678)
+@@ -1,7 +1,7 @@
+ // Top-level build file where you can add configuration options common to all sub-projects/modules.
+ 
+ buildscript { 
+-    ext.kotlin_version = '1.2.71'
++    ext.kotlin_version = '1.3.10'
+ 
+     
+     repositories {
+@@ -10,8 +10,7 @@
+         maven { url "https://plugins.gradle.org/m2/" }
+     }
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:3.2.1'
+-        classpath "com.android.tools.build:gradle:3.1.4"
++        classpath 'com.android.tools.build:gradle:3.6.4'
+         
+ 
+         // NOTE: Do not place your application dependencies here; they belong
+Index: gradle/wrapper/gradle-wrapper.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-4.6-all.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>ISO-8859-1
+===================================================================
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+--- a/gradle/wrapper/gradle-wrapper.properties	(revision 6ef2afc5dcaf38f2e14f551769ffc49539ba5ce3)
++++ b/gradle/wrapper/gradle-wrapper.properties	(date 1669394526682)
+@@ -1,5 +1,5 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-4.6-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-5.6.4-bin.zip
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
+Index: .idea/runConfigurations.xml
+===================================================================
+diff --git a/.idea/runConfigurations.xml b/.idea/runConfigurations.xml
+deleted file mode 100644
+--- a/.idea/runConfigurations.xml	(revision 6ef2afc5dcaf38f2e14f551769ffc49539ba5ce3)
++++ /dev/null	(revision 6ef2afc5dcaf38f2e14f551769ffc49539ba5ce3)
+@@ -1,12 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="RunConfigurationProducerService">
+-    <option name="ignoredProducers">
+-      <set>
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer" />
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer" />
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer" />
+-      </set>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/jarRepositories.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/jarRepositories.xml b/.idea/jarRepositories.xml
+new file mode 100644
+--- /dev/null	(date 1669391187342)
++++ b/.idea/jarRepositories.xml	(date 1669391187342)
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="RemoteRepositoriesConfiguration">
++    <remote-repository>
++      <option name="id" value="central" />
++      <option name="name" value="Maven Central repository" />
++      <option name="url" value="https://repo1.maven.org/maven2" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="jboss.community" />
++      <option name="name" value="JBoss Community repository" />
++      <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="BintrayJCenter" />
++      <option name="name" value="BintrayJCenter" />
++      <option name="url" value="https://jcenter.bintray.com/" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="Google" />
++      <option name="name" value="Google" />
++      <option name="url" value="https://dl.google.com/dl/android/maven2/" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="$PROJECT_DIR$/../../../Sdk/extras/google/m2repository" />
++      <option name="name" value="$PROJECT_DIR$/../../../Sdk/extras/google/m2repository" />
++      <option name="url" value="file:$PROJECT_DIR$/../../../Sdk/extras/google/m2repository" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="$PROJECT_DIR$/../../../Sdk/extras/android/m2repository" />
++      <option name="name" value="$PROJECT_DIR$/../../../Sdk/extras/android/m2repository" />
++      <option name="url" value="file:$PROJECT_DIR$/../../../Sdk/extras/android/m2repository" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="$PROJECT_DIR$/../../../Sdk/extras/m2repository" />
++      <option name="name" value="$PROJECT_DIR$/../../../Sdk/extras/m2repository" />
++      <option name="url" value="file:$PROJECT_DIR$/../../../Sdk/extras/m2repository" />
++    </remote-repository>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"GradleSettings\">\n    <option name=\"linkedExternalProjectsSettings\">\n      <GradleProjectSettings>\n        <option name=\"distributionType\" value=\"DEFAULT_WRAPPED\" />\n        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\n        <option name=\"modules\">\n          <set>\n            <option value=\"$PROJECT_DIR$\" />\n            <option value=\"$PROJECT_DIR$/app\" />\n          </set>\n        </option>\n        <option name=\"resolveModulePerSourceSet\" value=\"false\" />\n      </GradleProjectSettings>\n    </option>\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+--- a/.idea/gradle.xml	(revision 6ef2afc5dcaf38f2e14f551769ffc49539ba5ce3)
++++ b/.idea/gradle.xml	(date 1669393994750)
+@@ -1,17 +1,19 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
++  <component name="GradleMigrationSettings" migrationVersion="1" />
+   <component name="GradleSettings">
+     <option name="linkedExternalProjectsSettings">
+       <GradleProjectSettings>
++        <option name="testRunner" value="GRADLE" />
+         <option name="distributionType" value="DEFAULT_WRAPPED" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
++        <option name="gradleJvm" value="11" />
+         <option name="modules">
+           <set>
+             <option value="$PROJECT_DIR$" />
+             <option value="$PROJECT_DIR$/app" />
+           </set>
+         </option>
+-        <option name="resolveModulePerSourceSet" value="false" />
+       </GradleProjectSettings>
+     </option>
+   </component>
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"ProjectDictionaryState\">\n    <dictionary name=\"yanbraslavsky\" />\n  </component>\n  <component name=\"ProjectRootManager\" version=\"2\" languageLevel=\"JDK_1_8\" project-jdk-name=\"1.8\" project-jdk-type=\"JavaSDK\">\n    <output url=\"file://$PROJECT_DIR$/build/classes\" />\n  </component>\n  <component name=\"ProjectType\">\n    <option name=\"id\" value=\"Android\" />\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	(revision 6ef2afc5dcaf38f2e14f551769ffc49539ba5ce3)
++++ b/.idea/misc.xml	(date 1669394474983)
+@@ -1,9 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+-  <component name="ProjectDictionaryState">
+-    <dictionary name="yanbraslavsky" />
+-  </component>
+-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" project-jdk-name="1.8" project-jdk-type="JavaSDK">
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+     <output url="file://$PROJECT_DIR$/build/classes" />
+   </component>
+   <component name="ProjectType">
+Index: .idea/dictionaries/yanbraslavsky.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/dictionaries/yanbraslavsky.xml b/.idea/dictionaries/yanbraslavsky.xml
+new file mode 100644
+--- /dev/null	(date 1669391147063)
++++ b/.idea/dictionaries/yanbraslavsky.xml	(date 1669391147063)
+@@ -0,0 +1,3 @@
++<component name="ProjectDictionaryState">
++  <dictionary name="yanbraslavsky" />
++</component>
+\ No newline at end of file
+Index: .idea/compiler.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/compiler.xml b/.idea/compiler.xml
+new file mode 100644
+--- /dev/null	(date 1669394474991)
++++ b/.idea/compiler.xml	(date 1669394474991)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="CompilerConfiguration">
++    <bytecodeTargetLevel target="11" />
++  </component>
++</project>
+\ No newline at end of file

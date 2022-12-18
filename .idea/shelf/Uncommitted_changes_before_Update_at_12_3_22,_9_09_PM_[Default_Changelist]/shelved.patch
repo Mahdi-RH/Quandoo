@@ -1,0 +1,607 @@
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    package=\"com.quandoo.androidtask\">\n\n    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />\n    <uses-permission android:name=\"android.permission.INTERNET\" />\n\n    <application\n        android:name=\".App\"\n        android:allowBackup=\"true\"\n        android:icon=\"@mipmap/ic_launcher\"\n        android:label=\"@string/app_name\"\n        android:roundIcon=\"@mipmap/ic_launcher_round\"\n        android:supportsRtl=\"true\"\n        android:theme=\"@style/AppTheme\">\n        <activity\n            android:name=\".ui.main.MainActivity\"\n            android:exported=\"true\">\n            <intent-filter>\n                <action android:name=\"android.intent.action.MAIN\" />\n\n                <category android:name=\"android.intent.category.LAUNCHER\" />\n            </intent-filter>\n        </activity>\n        <activity\n            android:name=\".ui.tables.TablesActivity\"\n            android:exported=\"true\"\n            android:label=\"@string/app_name\">\n        </activity>\n\n    </application>\n\n</manifest>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+--- a/app/src/main/AndroidManifest.xml	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/app/src/main/AndroidManifest.xml	(date 1670082193981)
+@@ -15,18 +15,14 @@
+         android:theme="@style/AppTheme">
+         <activity
+             android:name=".ui.main.MainActivity"
+-            android:exported="true">
++            android:exported="true"
++            android:label="@string/app_name">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+ 
+                 <category android:name="android.intent.category.LAUNCHER" />
+             </intent-filter>
+         </activity>
+-        <activity
+-            android:name=".ui.tables.TablesActivity"
+-            android:exported="true"
+-            android:label="@string/app_name">
+-        </activity>
+ 
+     </application>
+ 
+Index: gradle/wrapper/gradle-wrapper.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-7.2-all.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+--- a/gradle/wrapper/gradle-wrapper.properties	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/gradle/wrapper/gradle-wrapper.properties	(date 1670048452391)
+@@ -1,5 +1,5 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-7.2-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-7.0.2-all.zip
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
+Index: app/src/main/java/com/quandoo/androidtask/ui/tables/TablesFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.quandoo.androidtask.ui.tables\n\nimport android.content.DialogInterface\nimport android.view.LayoutInflater\nimport android.view.ViewGroup\nimport android.widget.Toast\nimport androidx.lifecycle.Observer\nimport androidx.navigation.Navigation.findNavController\nimport androidx.recyclerview.widget.LinearLayoutManager\nimport com.quandoo.androidtask.databinding.FragmentTablesBinding\nimport com.quandoo.androidtask.domain.model.RestaurantData\nimport com.quandoo.androidtask.domain.model.Table\nimport com.quandoo.androidtask.ui.base.BaseBindingFragment\nimport com.quandoo.androidtask.ui.main.MainActivity\nimport com.quandoo.androidtask.utils.*\nimport dagger.hilt.android.AndroidEntryPoint\n\n\n\n@AndroidEntryPoint\nclass TablesFragment : BaseBindingFragment<FragmentTablesBinding>() , Logger {\n\n    private val adapter :TablesRvAdapter by lazy {\n        TablesRvAdapter { table: Table ->\n            tablesClickListener(\n                table\n            )\n        }\n    }\n\n\n    override val bindingInflater: (LayoutInflater, ViewGroup?, Boolean) -> FragmentTablesBinding =\n        { layoutInflater, viewGroup, b ->\n            FragmentTablesBinding.inflate(layoutInflater, viewGroup, b)\n        }\n\n    override fun initView() {\n        activity ?: return\n        activity?.title = \"Tables\"\n        (activity as MainActivity).mainViewModel.fetchData()\n        binding.recyclerView.layoutManager = LinearLayoutManager(\n            context\n        )\n        binding.recyclerView.adapter =adapter\n\n        (activity as MainActivity).mainViewModel.getRestaurantData().observe(\n            viewLifecycleOwner,\n            Observer { result ->\n\n                when(result) {\n                    is Resource.Success -> {\n                        (activity as MainActivity).setProgressVisibility(false)\n                        handleResult(result.data)\n                    }\n                    is Resource.Loading -> {\n                        (activity as MainActivity).setProgressVisibility(true)\n                    }\n                    is Resource.Error -> {\n                        (activity as MainActivity).setProgressVisibility(false)\n                        if (!AppStatus.getInstance(context).isOnline) {\n                            showInternetDialog()\n                        } else {\n                            Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()\n                        }\n                    }\n                }\n\n            })\n\n\n    }\n\n    private fun handleResult(data: RestaurantData?) {\n        data ?: return\n\n        adapter.replaceModel(data.tables ?: emptyList(), data.customers ?: emptyList())\n        syncTables()\n        data.reservations?.let {\n            PersistanceUtil.writeReservationsToFile(it)\n        }\n    }\n\n\n    private fun tablesClickListener(table: Table) {\n        //show dialog for reserved table\n        if (table.reservedBy != null) {\n            freeTableDialog {\n                table.reservedBy = null\n                syncTables()\n            }\n        } else {\n            val action =\n                TablesFragmentDirections.actionTablesFragmentToCustomersFragment(table.id)\n            findNavController(binding.root).navigate(action)\n        }\n    }\n\n    private fun syncTables() {\n        // FIXME : >:) Muhahahahaha\n        (activity as MainActivity).mainViewModel.getTables()?.let {\n            if (binding.recyclerView.adapter is TablesRvAdapter) {\n                val adapter = binding.recyclerView.adapter as TablesRvAdapter\n                adapter.notifyDataSetChanged()\n            }\n            // Save tables into file\n            PersistanceUtil.writeTablesToFile(it)//TODO(M) Rx\n\n        }\n\n    }\n\n    override fun onResume() {\n        super.onResume()\n        syncTables()\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesFragment.kt b/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesFragment.kt
+--- a/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesFragment.kt	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesFragment.kt	(date 1670080660135)
+@@ -1,6 +1,5 @@
+ package com.quandoo.androidtask.ui.tables
+ 
+-import android.content.DialogInterface
+ import android.view.LayoutInflater
+ import android.view.ViewGroup
+ import android.widget.Toast
+Index: build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// Top-level build file where you can add configuration options common to all sub-projects/modules.\n\nbuildscript { \n    ext.kotlin_version = '1.6.10'\n\n    \n    repositories {\n        google()\n        jcenter()\n        maven { url \"https://plugins.gradle.org/m2/\" }\n    }\n    dependencies {\n        classpath 'com.android.tools.build:gradle:7.1.3'\n//        classpath 'com.android.tools.build:gradle:7.1.3'\n        \n\n        // NOTE: Do not place your application dependencies here; they belong\n        // in the individual module build.gradle files\n    classpath \"org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version\"\n    classpath \"com.google.dagger:hilt-android-gradle-plugin:2.38.1\"\n\n        classpath \"androidx.navigation:navigation-safe-args-gradle-plugin:2.5.3\"\n\n\n\n    }\n}\n\nallprojects {\n    repositories {\n        google()\n        jcenter()\n    }\n}\n\ntask clean(type: Delete) {\n    delete rootProject.buildDir\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build.gradle b/build.gradle
+--- a/build.gradle	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/build.gradle	(date 1670088144285)
+@@ -5,12 +5,13 @@
+ 
+     
+     repositories {
++        mavenCentral()
+         google()
+         jcenter()
+         maven { url "https://plugins.gradle.org/m2/" }
+     }
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:7.1.3'
++        classpath 'com.android.tools.build:gradle:7.0.4'
+ //        classpath 'com.android.tools.build:gradle:7.1.3'
+         
+ 
+@@ -28,6 +29,7 @@
+ 
+ allprojects {
+     repositories {
++        mavenCentral()
+         google()
+         jcenter()
+     }
+Index: app/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>apply plugin: 'com.android.application'\napply plugin: 'kotlin-android'\napply plugin: 'kotlin-kapt'\napply plugin: 'kotlin-android-extensions'\napply plugin: 'dagger.hilt.android.plugin'\napply plugin: 'androidx.navigation.safeargs.kotlin'\n\n\nandroid {\n    compileSdkVersion 32\n    defaultConfig {\n        applicationId \"com.quandoo.androidtask\"\n        minSdkVersion 24\n        targetSdkVersion 32\n        versionCode 1\n        versionName \"1.0\"\n        testInstrumentationRunner \"android.support.test.runner.AndroidJUnitRunner\"\n    }\n    buildTypes {\n        release {\n            minifyEnabled false\n            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'\n        }\n    }\n    compileOptions {\n        sourceCompatibility = '1.8'\n        targetCompatibility = '1.8'\n    }\n\n    testOptions {\n        animationsDisabled = true\n    }\n    buildFeatures {\n        viewBinding = true\n    }\n}\n\ndependencies {\n\n    /*Retrofit */\n    implementation \"com.squareup.retrofit2:retrofit:2.9.0\"\n    implementation \"com.squareup.retrofit2:adapter-rxjava2:2.9.0\"\n    implementation \"com.squareup.retrofit2:converter-gson:2.9.0\"\n    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'\n\n    /*Rx*/\n    implementation \"io.reactivex.rxjava2:rxandroid:2.1.0\"\n\n    implementation 'com.squareup.picasso:picasso:2.71828'\n\n\n    /*Recyclerview*/\n    implementation 'androidx.recyclerview:recyclerview:1.2.1'\n\n    /*Hilt*/\n    implementation \"com.google.dagger:hilt-android:2.38.1\"\n    implementation 'com.google.android.material:material:1.4.0'\n    implementation 'androidx.legacy:legacy-support-v4:1.0.0'\n    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'\n    implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'\n    kapt \"com.google.dagger:hilt-compiler:2.38.1\"\n\n    /*Navigation*/\n    implementation \"androidx.navigation:navigation-fragment-ktx:2.5.3\"\n    implementation \"androidx.navigation:navigation-ui-ktx:2.5.3\"\n\n\n    /*Constraint Layout*/\n    implementation \"androidx.constraintlayout:constraintlayout:2.1.4\"\n\n    implementation fileTree(dir: 'libs', include: ['*.jar'])\n    implementation \"androidx.appcompat:appcompat:1.5.1\"\n\n    implementation \"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version\"\n\n    /*Test*/\n    testImplementation 'junit:junit:4.13.1'\n    testImplementation \"org.mockito.kotlin:mockito-kotlin:4.1.0\"\n    testImplementation \"androidx.arch.core:core-testing:2.1.0\"\n    testImplementation \"com.google.truth:truth:1.1.2\"\n\n    testImplementation \"org.mockito:mockito-core:4.5.1\"\n    testImplementation \"org.mockito:mockito-inline:3.5.13\"\n\n    androidTestImplementation 'com.android.support.test:runner:1.0.2'\n    androidTestImplementation 'com.android.support.test:rules:1.0.2'\n    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'\n    androidTestImplementation('com.android.support.test.espresso:espresso-contrib:3.0.2')\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/build.gradle b/app/build.gradle
+--- a/app/build.gradle	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/app/build.gradle	(date 1670087242802)
+@@ -14,7 +14,8 @@
+         targetSdkVersion 32
+         versionCode 1
+         versionName "1.0"
+-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
++        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
++
+     }
+     buildTypes {
+         release {
+@@ -29,6 +30,8 @@
+ 
+     testOptions {
+         animationsDisabled = true
++        execution 'ANDROIDX_TEST_ORCHESTRATOR'
++
+     }
+     buildFeatures {
+         viewBinding = true
+@@ -56,8 +59,6 @@
+     implementation "com.google.dagger:hilt-android:2.38.1"
+     implementation 'com.google.android.material:material:1.4.0'
+     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+-    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
+-    implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
+     kapt "com.google.dagger:hilt-compiler:2.38.1"
+ 
+     /*Navigation*/
+@@ -74,16 +75,21 @@
+     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+ 
+     /*Test*/
+-    testImplementation 'junit:junit:4.13.1'
++    testImplementation 'junit:junit:4.13.2'
+     testImplementation "org.mockito.kotlin:mockito-kotlin:4.1.0"
+     testImplementation "androidx.arch.core:core-testing:2.1.0"
+     testImplementation "com.google.truth:truth:1.1.2"
+ 
++    testImplementation "org.robolectric:robolectric:4.9"
++
++
+     testImplementation "org.mockito:mockito-core:4.5.1"
+     testImplementation "org.mockito:mockito-inline:3.5.13"
+ 
+-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+-    androidTestImplementation 'com.android.support.test:rules:1.0.2'
+-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+-    androidTestImplementation('com.android.support.test.espresso:espresso-contrib:3.0.2')
++    androidTestImplementation 'androidx.test:runner:1.5.1'
++    androidTestUtil 'androidx.test:orchestrator:1.4.2'
++    androidTestImplementation 'androidx.test:rules:1.5.0'
++
++    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
++    androidTestImplementation('androidx.test.espresso:espresso-contrib:3.5.0')
+ }
+Index: app/src/androidTest/java/com/quandoo/androidtask/AcceptanceTest.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.quandoo.androidtask\n\nimport android.content.Intent\nimport android.os.AsyncTask\nimport android.support.test.espresso.Espresso.onView\nimport android.support.test.espresso.action.ViewActions.click\nimport android.support.test.espresso.assertion.ViewAssertions.matches\nimport android.support.test.espresso.contrib.RecyclerViewActions\nimport android.support.test.espresso.matcher.ViewMatchers.*\nimport android.support.test.filters.LargeTest\nimport android.support.test.rule.ActivityTestRule\nimport android.support.test.runner.AndroidJUnit4\nimport android.support.v7.widget.RecyclerView\nimport com.quandoo.androidtask.utils.EspressoCustomMarchers.Companion.first\nimport com.quandoo.androidtask.utils.EspressoCustomMarchers.Companion.withHolderTablesView\nimport com.quandoo.androidtask.utils.EspressoCustomMarchers.Companion.withRecyclerView\nimport com.quandoo.androidtask.ui.tables.TablesActivity\nimport com.quandoo.androidtask.utils.Constants.CUSTOMERS_FILE_NAME\nimport com.quandoo.androidtask.utils.Constants.RESERVATIONS_FILE_NAME\nimport com.quandoo.androidtask.utils.Constants.TABLES_FILE_NAME\nimport com.quandoo.androidtask.utils.PersistanceUtil\nimport io.reactivex.plugins.RxJavaPlugins\nimport io.reactivex.schedulers.Schedulers\nimport org.hamcrest.CoreMatchers.not\nimport org.junit.After\nimport org.junit.Before\nimport org.junit.Rule\nimport org.junit.Test\nimport org.junit.runner.RunWith\n\n\n/**\n * Instrumented test, which will execute on an Android device.\n * See [testing documentation](http://d.android.com/tools/testing).\n */\n@RunWith(AndroidJUnit4::class)\n@LargeTest\nclass AcceptanceTest {\n\n    @Rule\n    @JvmField\n    var mActivityTestRule: ActivityTestRule<TablesActivity> =\n            ActivityTestRule(TablesActivity::class.java, true,\n                    false)\n\n    @Before\n    fun setup() {\n\n        //clear cached state\n        PersistanceUtil.removeSerializable(TABLES_FILE_NAME)\n        PersistanceUtil.removeSerializable(CUSTOMERS_FILE_NAME)\n        PersistanceUtil.removeSerializable(RESERVATIONS_FILE_NAME)\n\n        //make espresso wait for RXJava\n        RxJavaPlugins.setIoSchedulerHandler { Schedulers.from(AsyncTask.THREAD_POOL_EXECUTOR) }\n        RxJavaPlugins.setComputationSchedulerHandler { Schedulers.from(AsyncTask.THREAD_POOL_EXECUTOR) }\n        RxJavaPlugins.setNewThreadSchedulerHandler { Schedulers.from(AsyncTask.THREAD_POOL_EXECUTOR) }\n\n\n        //launch activity using empty intent (no arguments needed for now ...)\n        mActivityTestRule.launchActivity(Intent())\n    }\n\n    @After\n    fun tearDown() {\n    }\n\n\n    @Test\n    fun reserveTableTest() {\n\n        //GIVEN :\n\n        //App is open\n        onView(withText(\"Tables\")).check(matches(isDisplayed()))\n\n        // List of tables visible\n        onView(withId(R.id.recycler_view)).check(matches(isDisplayed()))\n\n        //There is at least one free table visible\n        onView(withId(R.id.recycler_view))\n                .perform(RecyclerViewActions.scrollToHolder(first(withHolderTablesView(\"Free\"))))\n\n\n        //Hacky way of getting a position of desired element\n        val freeTablePosition = TablesActivity.tableNetEntities.indexOfFirst { table -> table.reservedBy == null }\n\n        //WHEN :\n\n        //User clicks on free table\n        onView(withId(R.id.recycler_view))\n                .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(freeTablePosition, click()))\n\n        //THEN :\n\n        //Screen with customers appear\n        onView(withText(\"Customers\")).check(matches(isDisplayed()))\n\n        //WHEN :\n\n        //User clicks on any user\n        onView(withId(R.id.recycler_view))\n                .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(freeTablePosition, click()))\n\n        //THEN :\n\n        //Screen with users tables appear\n        onView(withText(\"Tables\")).check(matches(isDisplayed()))\n\n\n        //Previously selected table is marked as reserved by a user name\n        onView(withRecyclerView(R.id.recycler_view).atPosition(freeTablePosition))\n                .check(matches(not(hasDescendant(withText(\"Free\")))))\n\n    }\n\n    @Test\n    fun removeReservationTest() {\n\n        //GIVEN :\n\n        //App is open\n        onView(withText(\"Tables\")).check(matches(isDisplayed()))\n\n        // List of tables visible\n        onView(withId(R.id.recycler_view)).check(matches(isDisplayed()))\n\n        //There is at least one reserved table\n        onView(withId(R.id.recycler_view))\n                .perform(RecyclerViewActions.scrollToHolder(first(not(withHolderTablesView(\"Free\")))))\n\n\n        //FIXME : Hacky way of getting a position of desired element\n        val reservedTablePosition = TablesActivity.tableNetEntities.indexOfFirst { table -> table.reservedBy != null }\n\n        //WHEN :\n\n        //User clicks on a reserved table\n        onView(withId(R.id.recycler_view))\n                .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(reservedTablePosition, click()))\n\n        //THEN :\n\n        //Confirmation dialog appears\n        onView(withText(\"Do you want to free the table?\")).check(matches(isDisplayed()))\n\n        //WHEN :\n\n        //User clicks on a accept button\n        onView(withText(\"Yes\")).check(matches(isDisplayed())).perform(click())\n\n\n        //Previously reserved table is marked as free\n        onView(withRecyclerView(R.id.recycler_view).atPosition(reservedTablePosition))\n                .check(matches(hasDescendant(withText(\"Free\"))))\n\n    }\n\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/androidTest/java/com/quandoo/androidtask/AcceptanceTest.kt b/app/src/androidTest/java/com/quandoo/androidtask/AcceptanceTest.kt
+--- a/app/src/androidTest/java/com/quandoo/androidtask/AcceptanceTest.kt	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/app/src/androidTest/java/com/quandoo/androidtask/AcceptanceTest.kt	(date 1670088288739)
+@@ -2,19 +2,21 @@
+ 
+ import android.content.Intent
+ import android.os.AsyncTask
+-import android.support.test.espresso.Espresso.onView
+-import android.support.test.espresso.action.ViewActions.click
+-import android.support.test.espresso.assertion.ViewAssertions.matches
+-import android.support.test.espresso.contrib.RecyclerViewActions
+-import android.support.test.espresso.matcher.ViewMatchers.*
+-import android.support.test.filters.LargeTest
+-import android.support.test.rule.ActivityTestRule
+-import android.support.test.runner.AndroidJUnit4
+-import android.support.v7.widget.RecyclerView
++
++
++import androidx.recyclerview.widget.RecyclerView
++import androidx.test.espresso.Espresso.onView
++import androidx.test.espresso.action.ViewActions.click
++import androidx.test.espresso.assertion.ViewAssertions.matches
++import androidx.test.espresso.contrib.RecyclerViewActions
++import androidx.test.espresso.matcher.ViewMatchers.*
++import androidx.test.filters.LargeTest
++import androidx.test.rule.ActivityTestRule
++import androidx.test.runner.AndroidJUnit4
++import com.quandoo.androidtask.ui.main.MainActivity
+ import com.quandoo.androidtask.utils.EspressoCustomMarchers.Companion.first
+ import com.quandoo.androidtask.utils.EspressoCustomMarchers.Companion.withHolderTablesView
+ import com.quandoo.androidtask.utils.EspressoCustomMarchers.Companion.withRecyclerView
+-import com.quandoo.androidtask.ui.tables.TablesActivity
+ import com.quandoo.androidtask.utils.Constants.CUSTOMERS_FILE_NAME
+ import com.quandoo.androidtask.utils.Constants.RESERVATIONS_FILE_NAME
+ import com.quandoo.androidtask.utils.Constants.TABLES_FILE_NAME
+@@ -22,11 +24,9 @@
+ import io.reactivex.plugins.RxJavaPlugins
+ import io.reactivex.schedulers.Schedulers
+ import org.hamcrest.CoreMatchers.not
+-import org.junit.After
+-import org.junit.Before
+-import org.junit.Rule
+-import org.junit.Test
++import org.junit.*
+ import org.junit.runner.RunWith
++import org.junit.runners.MethodSorters
+ 
+ 
+ /**
+@@ -35,12 +35,13 @@
+  */
+ @RunWith(AndroidJUnit4::class)
+ @LargeTest
++@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+ class AcceptanceTest {
+ 
+     @Rule
+     @JvmField
+-    var mActivityTestRule: ActivityTestRule<TablesActivity> =
+-            ActivityTestRule(TablesActivity::class.java, true,
++    var mActivityTestRule: ActivityTestRule<MainActivity> =
++            ActivityTestRule(MainActivity::class.java, true,
+                     false)
+ 
+     @Before
+@@ -67,7 +68,7 @@
+ 
+ 
+     @Test
+-    fun reserveTableTest() {
++    fun test_a_reserveTableTest() {
+ 
+         //GIVEN :
+ 
+@@ -83,9 +84,10 @@
+ 
+ 
+         //Hacky way of getting a position of desired element
+-        val freeTablePosition = TablesActivity.tableNetEntities.indexOfFirst { table -> table.reservedBy == null }
++        val freeTablePosition = mActivityTestRule.activity.mainViewModel.getTables()?.indexOfFirst { table -> table.reservedBy == null }
+ 
+-        //WHEN :
++        freeTablePosition?.let {
++            //WHEN :
+ 
+         //User clicks on free table
+         onView(withId(R.id.recycler_view))
+@@ -115,7 +117,7 @@
+     }
+ 
+     @Test
+-    fun removeReservationTest() {
++    fun test_b_removeReservationTest() {
+ 
+         //GIVEN :
+ 
+@@ -131,29 +133,30 @@
+ 
+ 
+         //FIXME : Hacky way of getting a position of desired element
+-        val reservedTablePosition = TablesActivity.tableNetEntities.indexOfFirst { table -> table.reservedBy != null }
+-
+-        //WHEN :
+-
+-        //User clicks on a reserved table
+-        onView(withId(R.id.recycler_view))
++        val reservedTablePosition = mActivityTestRule.activity.mainViewModel.getTables()?.indexOfFirst { table -> table.reservedBy != null }
++        reservedTablePosition?.let {
++            //WHEN :
++            //User clicks on a reserved table
++            onView(withId(R.id.recycler_view))
+                 .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(reservedTablePosition, click()))
+ 
+-        //THEN :
++            //THEN :
+ 
+-        //Confirmation dialog appears
+-        onView(withText("Do you want to free the table?")).check(matches(isDisplayed()))
++            //Confirmation dialog appears
++            onView(withText("Do you want to free the table?")).check(matches(isDisplayed()))
+ 
+-        //WHEN :
++            //WHEN :
+ 
+-        //User clicks on a accept button
+-        onView(withText("Yes")).check(matches(isDisplayed())).perform(click())
++            //User clicks on a accept button
++            onView(withText("Yes")).check(matches(isDisplayed())).perform(click())
+ 
+ 
+-        //Previously reserved table is marked as free
+-        onView(withRecyclerView(R.id.recycler_view).atPosition(reservedTablePosition))
++            //Previously reserved table is marked as free
++            onView(withRecyclerView(R.id.recycler_view).atPosition(reservedTablePosition))
+                 .check(matches(hasDescendant(withText("Free"))))
+ 
++        }
+     }
+ 
++}
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/quandoo/androidtask/ui/tables/TablesActivity.java
+===================================================================
+diff --git a/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesActivity.java b/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesActivity.java
+deleted file mode 100644
+--- a/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesActivity.java	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ /dev/null	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
+@@ -1,188 +0,0 @@
+-package com.quandoo.androidtask.ui.tables;
+-
+-import android.view.LayoutInflater;
+-import androidx.annotation.NonNull;
+-import androidx.recyclerview.widget.RecyclerView;
+-import com.quandoo.androidtask.data.network.model.CustomerNetEntity;
+-import com.quandoo.androidtask.data.network.model.TableNetEntity;
+-import com.quandoo.androidtask.domain.model.Table;
+-import com.quandoo.androidtask.databinding.ActivityTablesBinding;
+-import com.quandoo.androidtask.ui.base.BaseBindingActivity;
+-import com.quandoo.androidtask.utils.Logger;
+-import com.quandoo.androidtask.data.network.model.ReservationNetEntity;
+-
+-import java.util.List;
+-
+-import dagger.hilt.android.AndroidEntryPoint;
+-
+-public class TablesActivity extends BaseBindingActivity<ActivityTablesBinding> implements Logger {
+-
+-
+-
+-
+-//    @Inject
+-//    public TablesViewModel tablesViewModel ;
+-
+-
+-    private RecyclerView rv;
+-
+-    // FIXME : >:) Muhahahahaha
+-    public static List<TableNetEntity> tableNetEntities;
+-    public static List<ReservationNetEntity> reservationNetEntities;
+-    public static List<CustomerNetEntity> customerNetEntities;
+-    private List<Table> tables;
+-
+-
+-//    @NotNull
+-//    public static void syncReservations(@NotNull List<? extends Reservation> reservations) {
+-//        PersistanceUtil.saveSerializable(new ArrayList<>(reservations), RESERVATIONS_FILE_NAME);
+-//    }
+-//
+-//    private void writeCustomersToFile(List<Customer> customers) {
+-//        PersistanceUtil.saveSerializable(new ArrayList<>(customers), CUSTOMERS_FILE_NAME);
+-//    }
+-//
+-//    private void tablesClickListener(Table table) {
+-//        //show dialog for reserved table
+-//        if (table.getReservedBy() != null) {
+-//
+-//            //show dialog that removes the reservation
+-//            AlertDialog.Builder builder = new AlertDialog.Builder(TablesActivity.this);
+-//            builder.setMessage("Do you want to free the table?").setPositiveButton("Yes", (dialog, which) -> {
+-//
+-//                //Free table
+-//                table.setReservedBy(null);
+-//                syncTables();
+-//
+-//            }).setNegativeButton("No", null).show();
+-//        } else {
+-//            startActivity(CustomersActivity
+-//                    .createStartingIntent(table, TablesActivity.this));
+-//        }
+-//    }
+-
+-//    @Override
+-//    protected void onResume() {
+-//        super.onResume();
+-//        syncTables();
+-//    }
+-//
+-//    private void syncTables() {
+-//        // FIXME : >:) Muhahahahaha
+-//        if (tables != null  ) {
+-//            if ((getBinding().recyclerView.getAdapter() instanceof TablesRvAdapter)) {
+-//                TablesRvAdapter adapter = (TablesRvAdapter) getBinding().recyclerView.getAdapter();
+-//                adapter.notifyDataSetChanged();
+-//            }
+-//
+-//            // Save tables into file
+-//            PersistanceUtil.saveSerializable(new ArrayList<>(tables), TABLES_FILE_NAME);
+-//        }
+-//    }
+-
+-
+-
+-    @Override
+-    public void initView() {
+-//        setTitle("Tables");
+-//
+-//        tablesViewModel.getRestaurantDataLive().observe(this, restaurantData -> {
+-//
+-//             tables = restaurantData.getTables();
+-//            getBinding().recyclerView.setLayoutManager(new LinearLayoutManager(this));
+-//            getBinding().recyclerView.setAdapter(new TablesRvAdapter(restaurantData.getTables(),
+-//                                TablesActivity.this::tablesClickListener));
+-//
+-//            syncTables();
+-//            if (restaurantData.getReservations() != null) {
+-//                syncReservations(restaurantData.getReservations());
+-//            }
+-//
+-//        });
+-//
+-//
+-//        //close the app when no internet
+-//        if(!AppStatus.getInstance(getApplicationContext()).isOnline()){
+-//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+-//            builder.setMessage("No internet connection!")
+-//                    .setCancelable(false)
+-//                    .setPositiveButton("Close App", (dialog, id) -> {
+-//                        finish();
+-//                    });
+-//            AlertDialog alert = builder.create();
+-//            alert.show();
+-//            return;
+-//        }
+-
+-
+-//        //try to read objects from file
+-//        tableNetEntities = PersistanceUtil.readSerializable(TABLES_FILE_NAME);
+-//        reservationNetEntities = PersistanceUtil.readSerializable(RESERVATIONS_FILE_NAME);
+-//        customerNetEntities = PersistanceUtil.readSerializable(CUSTOMERS_FILE_NAME);
+-
+-//        if (tableNetEntities != null && reservationNetEntities != null && customerNetEntities != null) {
+-//            //Data is loaded from local storage. We can work with that.
+-//            rv.setAdapter(new TablesRvAdapter(tableNetEntities,
+-//                    this::tablesClickListener));
+-//            return;
+-//        }
+-
+-
+-        // FIXME : >:) Muhahahahaha
+-//        RestaurantService restaurantService = new RestaurantService.Creator().create();
+-//        Single.zip(restaurantService.getTables(), restaurantService.getCustomers(), (tables1, customers1) -> {
+-//            tables = tables1;
+-//            customerNetEntities = customers1;
+-//            writeCustomersToFile(customers1);
+-//            return tables1;
+-//        }).zipWith(restaurantService.getReservations(), (o, reservations1) -> reservations1)
+-//                .subscribeOn(Schedulers.io())
+-//                .observeOn(AndroidSchedulers.mainThread())
+-//                .subscribeWith(new SingleObserver<List<Reservation>>() {
+-//                    @Override
+-//                    public void onSubscribe(Disposable d) {
+-//
+-//                    }
+-//
+-//                    @Override
+-//                    public void onSuccess(List<Reservation> value) {
+-//                        reservations = value;
+-//
+-//                        // FIXME : >:) Muhahahahaha
+-//                        reservations.forEach(reservation -> {
+-//                            tables.forEach(table -> {
+-//                                //find table from reservation
+-//                                if (table.getId() == reservation.getTableId()) {
+-//                                    customerNetEntities.forEach(customerNetEntity -> {
+-//                                        //find user from reservation
+-//                                        if (customerNetEntity.getId() == reservation.getUserId()) {
+-//                                            //mark table as reserved
+-//                                            table.reservedBy = customerNetEntity.getFirstName() + " " + customerNetEntity.getLastName();
+-//                                        }
+-//                                    });
+-//                                }
+-//                            });
+-//                        });
+-//
+-//                        rv.setAdapter(new TablesRvAdapter(tables,
+-//                                TablesActivity.this::tablesClickListener));
+-//
+-//                        syncTables();
+-//                        syncReservations(reservations);
+-//                    }
+-//
+-//                    @Override
+-//                    public void onError(Throwable e) {
+-//                        log(e.getLocalizedMessage());
+-//                    }
+-//                });
+-
+-    }
+-
+-
+-    @NonNull
+-    @Override
+-    public ActivityTablesBinding bindingInflater(@NonNull LayoutInflater inflater) {
+-        return ActivityTablesBinding.inflate(inflater);
+-    }
+-}
+\ No newline at end of file
+Index: app/src/main/java/com/quandoo/androidtask/ui/tables/TablesRvAdapter.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.quandoo.androidtask.ui.tables;\n\nimport android.graphics.Color;\nimport android.support.annotation.NonNull;\nimport android.view.LayoutInflater;\nimport android.view.View;\nimport android.view.ViewGroup;\nimport androidx.recyclerview.widget.RecyclerView;\nimport com.quandoo.androidtask.databinding.TableCellBinding;\nimport com.quandoo.androidtask.domain.model.Customer;\nimport com.quandoo.androidtask.domain.model.Table;\nimport com.quandoo.androidtask.ui.base.BaseViewHolder;\nimport com.quandoo.androidtask.utils.Logger;\nimport com.quandoo.androidtask.R;\nimport com.squareup.picasso.Picasso;\n\nimport java.util.List;\n\npublic class TablesRvAdapter extends RecyclerView.Adapter<TablesRvAdapter.TableViewHolder> implements Logger {\n\n\n    interface TableClickListener {\n        void onTableItemClick(Table clickedTableNetEntity);\n    }\n\n    private  List<Table> tables;\n    private  List<Customer> customers;\n    private final TableClickListener clickLstnr;\n\n    TablesRvAdapter(final @NonNull TableClickListener clickLstnr) {\n        this.clickLstnr = clickLstnr;\n    }\n\n    void replaceModel(List<Table> tables,List<Customer> customers){\n        this.tables = tables;\n        this.customers=customers;\n    }\n\n\n    @NonNull\n    @Override\n    public TableViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {\n\n        return new TableViewHolder(TableCellBinding.inflate(LayoutInflater.from(viewGroup.getContext()),\n                viewGroup,\n                false));\n    }\n\n    @Override\n    public void onBindViewHolder(@NonNull TableViewHolder viewHolder, int i) {\n        Table table = tables.get(i);\n\n        viewHolder.onBind(table);\n    }\n\n\n    private String findUserImage(String userFirstNameLastName) {\n        for (Customer customer : customers) {\n            String fullName = customer.getFirstName() + \" \" + customer.getLastName();\n            if (fullName.equals(userFirstNameLastName)) {\n                return customer.getImageUrl();\n            }\n        }\n        return null;\n    }\n\n    private int getTableShapeImageResourceId(String tableShape) {\n        switch (tableShape) {\n            case \"circle\":  // TODO(M) USE ENUM\n                return R.drawable.ic_circle;\n            case \"square\":\n                return R.drawable.ic_square;\n            default:\n                return R.drawable.ic_rectangle;\n        }\n\n    }\n\n    @Override\n    public int getItemCount() {\n        return (tables != null && !tables.isEmpty()) ? tables.size() : 0;\n    }\n\n    protected  class TableViewHolder extends BaseViewHolder<Table> {\n\n        private final TableCellBinding binding;\n\n        TableViewHolder(TableCellBinding binding) {\n            super(binding.getRoot());\n            this.binding = binding;\n        }\n\n        @Override\n        public void onBind(Table table) {\n\n\n            binding.tableId.setText(\"\" + table.getId());\n\n            //TODO : Set name and color depending on reservation status\n            if (table.getReservedBy() != null) {\n                binding.reservingCustomerName.setText(table.getReservedBy());\n                binding.reservingCustomerName.setTextColor(Color.RED);\n\n                //load reserving user image\n                Picasso.get().load(findUserImage(table.getReservedBy())).into(binding.avatarImageView);\n                binding.avatarImageView.setVisibility(View.VISIBLE);\n\n            } else {\n                binding.reservingCustomerName.setText(\"Free\");\n                binding.reservingCustomerName.setTextColor(Color.GREEN);\n                binding.avatarImageView.setVisibility(View.INVISIBLE);\n            }\n\n\n            binding.tableImageView.setImageResource(getTableShapeImageResourceId(table.getShape()));\n            binding.getRoot().setOnClickListener(v -> clickLstnr.onTableItemClick(table));\n\n        }\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesRvAdapter.java b/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesRvAdapter.java
+--- a/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesRvAdapter.java	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/app/src/main/java/com/quandoo/androidtask/ui/tables/TablesRvAdapter.java	(date 1670080660111)
+@@ -5,7 +5,10 @@
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.ViewGroup;
++
++
+ import androidx.recyclerview.widget.RecyclerView;
++
+ import com.quandoo.androidtask.databinding.TableCellBinding;
+ import com.quandoo.androidtask.domain.model.Customer;
+ import com.quandoo.androidtask.domain.model.Table;
+@@ -81,7 +84,7 @@
+         return (tables != null && !tables.isEmpty()) ? tables.size() : 0;
+     }
+ 
+-    protected  class TableViewHolder extends BaseViewHolder<Table> {
++    public class TableViewHolder extends BaseViewHolder<Table> {
+ 
+         private final TableCellBinding binding;
+ 
+Index: app/src/androidTest/java/com/quandoo/androidtask/utils/EspressoCustomMarchers.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.quandoo.androidtask.utils\n\nimport android.support.test.espresso.PerformException\nimport android.support.test.espresso.UiController\nimport android.support.test.espresso.ViewAction\nimport android.support.test.espresso.matcher.BoundedMatcher\nimport android.support.test.espresso.matcher.ViewMatchers.isRoot\nimport android.support.test.espresso.matcher.ViewMatchers.withId\nimport android.support.test.espresso.util.HumanReadables\nimport android.support.test.espresso.util.TreeIterables\nimport android.support.v7.widget.RecyclerView\nimport android.support.v7.widget.Toolbar\nimport android.view.View\nimport android.widget.TextView\nimport com.quandoo.androidtask.R\nimport com.quandoo.androidtask.ui.tables.TablesRvAdapter\nimport org.hamcrest.CoreMatchers.`is`\nimport org.hamcrest.Description\nimport org.hamcrest.Matcher\nimport org.hamcrest.TypeSafeMatcher\nimport java.util.concurrent.TimeoutException\nimport org.hamcrest.BaseMatcher\n\n\nclass EspressoCustomMarchers {\n    companion object {\n\n\n        /** Perform action of waiting for a specific view id.  */\n        fun waitForView(viewId: Int, millis: Long): ViewAction {\n            return object : ViewAction {\n                override fun getConstraints(): Matcher<View> {\n                    return isRoot()\n                }\n\n                override fun getDescription(): String {\n                    return \"wait for a specific view with id <$viewId> during $millis millis.\"\n                }\n\n                override fun perform(uiController: UiController, view: View) {\n                    uiController.loopMainThreadUntilIdle()\n                    val startTime = System.currentTimeMillis()\n                    val endTime = startTime + millis\n                    val viewMatcher = withId(viewId)\n\n                    do {\n                        for (child in TreeIterables.breadthFirstViewTraversal(view)) {\n                            // found view with required ID\n                            if (viewMatcher.matches(child)) {\n                                return\n                            }\n                        }\n\n                        uiController.loopMainThreadForAtLeast(50)\n                    } while (System.currentTimeMillis() < endTime)\n\n                    // timeout happens\n                    throw PerformException.Builder()\n                            .withActionDescription(this.description)\n                            .withViewDescription(HumanReadables.describe(view))\n                            .withCause(TimeoutException())\n                            .build()\n                }\n            }\n        }\n\n\n        fun <T> first(matcher: Matcher<T>): Matcher<T> {\n            return object : BaseMatcher<T>() {\n                var isFirst = true\n\n                override fun matches(item: Any): Boolean {\n                    if (isFirst && matcher.matches(item)) {\n                        isFirst = false\n                        return true\n                    }\n\n                    return false\n                }\n\n                override fun describeTo(description: Description) {\n                    description.appendText(\"should return first matching item\")\n                }\n            }\n        }\n\n\n        fun withHolderTablesView(text: String): Matcher<RecyclerView.ViewHolder> {\n            return object : BoundedMatcher<RecyclerView.ViewHolder, TablesRvAdapter.TableViewHolder>(TablesRvAdapter.TableViewHolder::class.java!!) {\n\n                override fun describeTo(description: Description) {\n                    description.appendText(\"No ViewHolder found with text: $text\")\n                }\n\n                override fun matchesSafely(item: TablesRvAdapter.TableViewHolder): Boolean {\n                    val reservedByText = item.itemView.findViewById(R.id.reservingCustomerName) as TextView\n                    return reservedByText.text.toString().contains(text)\n                }\n            }\n        }\n\n\n        fun withToolbarTitle(title: CharSequence): Matcher<Any> {\n            return withToolbarTitle(`is`(title))\n        }\n\n        private fun withToolbarTitle(textMatcher: Matcher<CharSequence>): Matcher<Any> {\n            return object : BoundedMatcher<Any, Toolbar>(Toolbar::class.java) {\n                public override fun matchesSafely(toolbar: Toolbar): Boolean {\n                    return textMatcher.matches(toolbar.title)\n                }\n\n                override fun describeTo(description: Description) {\n                    description.appendText(\"with toolbar title: \")\n                    textMatcher.describeTo(description)\n                }\n            }\n        }\n\n        fun withRecyclerView(recyclerViewId: Int): RecyclerViewMatcher {\n            return RecyclerViewMatcher(recyclerViewId)\n        }\n    }\n\n    fun withResourceName(resourceName: String): Matcher<View> {\n        return withResourceName(`is`(resourceName))\n    }\n\n    fun withResourceName(resourceNameMatcher: Matcher<String>): Matcher<View> {\n        return object : TypeSafeMatcher<View>() {\n            override fun describeTo(description: Description) {\n                description.appendText(\"with resource name: \")\n                resourceNameMatcher.describeTo(description)\n            }\n\n            override fun matchesSafely(view: View): Boolean {\n                val id = view.id\n                return (id != View.NO_ID && id != 0 && view.resources != null\n                        && resourceNameMatcher.matches(view.resources.getResourceName(id)))\n            }\n        }\n    }\n\n\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/androidTest/java/com/quandoo/androidtask/utils/EspressoCustomMarchers.kt b/app/src/androidTest/java/com/quandoo/androidtask/utils/EspressoCustomMarchers.kt
+--- a/app/src/androidTest/java/com/quandoo/androidtask/utils/EspressoCustomMarchers.kt	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/app/src/androidTest/java/com/quandoo/androidtask/utils/EspressoCustomMarchers.kt	(date 1670080660127)
+@@ -1,17 +1,19 @@
+ package com.quandoo.androidtask.utils
+ 
+-import android.support.test.espresso.PerformException
+-import android.support.test.espresso.UiController
+-import android.support.test.espresso.ViewAction
+-import android.support.test.espresso.matcher.BoundedMatcher
+-import android.support.test.espresso.matcher.ViewMatchers.isRoot
+-import android.support.test.espresso.matcher.ViewMatchers.withId
+-import android.support.test.espresso.util.HumanReadables
+-import android.support.test.espresso.util.TreeIterables
+-import android.support.v7.widget.RecyclerView
+-import android.support.v7.widget.Toolbar
++
++
+ import android.view.View
+ import android.widget.TextView
++import androidx.appcompat.widget.Toolbar
++import androidx.recyclerview.widget.RecyclerView
++import androidx.test.espresso.PerformException
++import androidx.test.espresso.UiController
++import androidx.test.espresso.ViewAction
++import androidx.test.espresso.matcher.BoundedMatcher
++import androidx.test.espresso.matcher.ViewMatchers.isRoot
++import androidx.test.espresso.matcher.ViewMatchers.withId
++import androidx.test.espresso.util.HumanReadables
++import androidx.test.espresso.util.TreeIterables
+ import com.quandoo.androidtask.R
+ import com.quandoo.androidtask.ui.tables.TablesRvAdapter
+ import org.hamcrest.CoreMatchers.`is`
+@@ -86,7 +88,7 @@
+ 
+ 
+         fun withHolderTablesView(text: String): Matcher<RecyclerView.ViewHolder> {
+-            return object : BoundedMatcher<RecyclerView.ViewHolder, TablesRvAdapter.TableViewHolder>(TablesRvAdapter.TableViewHolder::class.java!!) {
++            return object : BoundedMatcher<RecyclerView.ViewHolder, TablesRvAdapter.TableViewHolder>(TablesRvAdapter.TableViewHolder::class.java) {
+ 
+                 override fun describeTo(description: Description) {
+                     description.appendText("No ViewHolder found with text: $text")
+Index: app/src/androidTest/java/com/quandoo/androidtask/utils/RecyclerViewMatcher.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.quandoo.androidtask.utils\n\nimport android.content.res.Resources\nimport android.support.v7.widget.RecyclerView\nimport android.view.View\nimport org.hamcrest.Description\nimport org.hamcrest.Matcher\nimport org.hamcrest.TypeSafeMatcher\n\nclass RecyclerViewMatcher(private val recyclerViewId: Int) {\n\n    fun atPosition(position: Int): Matcher<View> {\n        return atPositionOnView(position, -1)\n    }\n\n    fun atPositionOnView(position: Int, targetViewId: Int): Matcher<View> {\n\n        return object : TypeSafeMatcher<View>() {\n            var resources: Resources? = null\n            var childView: View? = null\n\n            override fun describeTo(description: Description) {\n                var idDescription = Integer.toString(recyclerViewId)\n                if (this.resources != null) {\n                    try {\n                        idDescription = this.resources!!.getResourceName(recyclerViewId)\n                    } catch (var4: Resources.NotFoundException) {\n                        idDescription = String.format(\"%s (resource name not found)\",\n                                *arrayOf<Any>(Integer.valueOf(recyclerViewId)))\n                    }\n\n                }\n\n                description.appendText(\"with id: \" + idDescription)\n            }\n\n            override fun matchesSafely(view: View): Boolean {\n\n                this.resources = view.resources\n\n                if (childView == null) {\n                    val recyclerView = view.rootView.findViewById<RecyclerView>(recyclerViewId) as RecyclerView\n                    if (recyclerView.id == recyclerViewId) {\n                        childView = recyclerView.findViewHolderForAdapterPosition(position)!!.itemView\n                    } else {\n                        return false\n                    }\n                }\n\n                if (targetViewId == -1) {\n                    return view === childView\n                } else {\n                    val targetView = childView!!.findViewById<View>(targetViewId)\n                    return view === targetView\n                }\n\n            }\n        }\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/androidTest/java/com/quandoo/androidtask/utils/RecyclerViewMatcher.kt b/app/src/androidTest/java/com/quandoo/androidtask/utils/RecyclerViewMatcher.kt
+--- a/app/src/androidTest/java/com/quandoo/androidtask/utils/RecyclerViewMatcher.kt	(revision 06f425a2704408dee408e793ad5cca905c79c1f9)
++++ b/app/src/androidTest/java/com/quandoo/androidtask/utils/RecyclerViewMatcher.kt	(date 1670047017821)
+@@ -1,8 +1,8 @@
+ package com.quandoo.androidtask.utils
+ 
+ import android.content.res.Resources
+-import android.support.v7.widget.RecyclerView
+ import android.view.View
++import androidx.recyclerview.widget.RecyclerView
+ import org.hamcrest.Description
+ import org.hamcrest.Matcher
+ import org.hamcrest.TypeSafeMatcher
